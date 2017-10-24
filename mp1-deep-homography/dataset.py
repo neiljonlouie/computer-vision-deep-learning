@@ -10,8 +10,6 @@ import os
 import cv2
 import numpy as np
 
-# Creates a dataset of image pairs, using JPEG files found in src_dir.
-# Image pairs and resulting homography is stored in dst_dir.
 def create_dataset(src_dir, dst_dir, res_height, res_width, patch_size,
                    perturb_size, batch_size=1):
     """Creates a dataset of image pairs from JPEG files found in src_dir.
@@ -19,15 +17,16 @@ def create_dataset(src_dir, dst_dir, res_height, res_width, patch_size,
     pairs and resulting homography H_4pt are stored by batch in dst_dir.
 
     Args:
-        src_dir (str): Directory containing images
-        dst_dir (str): Directory where dataset is to be stored
-        res_height (int): Height of resized image
-        res_width (int): Width of resized image
-        patch_size (int): Height and width of patch to be extracted from images
-        perturb_size (int): Size of region where original corners are to be
+        src_dir (str)       Directory containing images
+        dst_dir (str)       Directory where dataset is to be stored
+        res_height (int)    Height of resized image
+        res_width (int)     Width of resized image
+        patch_size (int)    Height and width of patch to be extracted from
+                            the images
+        perturb_size (int)  Size of region where original corners are to be
                             perturbed
-        batch_size (int): Number of images to be clumped into a single file
-                          at the output
+        batch_size (int)    Number of images to be clumped into a single file
+                            at the output
 
     Returns:
         None.
@@ -164,6 +163,22 @@ def create_dataset(src_dir, dst_dir, res_height, res_width, patch_size,
 # Assumes that data is stored in .npy files and their corresponding labels are
 # stored in .txt files
 def load_dataset(dataset_dir, test=False):
+    """Loads the dataset contained in the specified directory.
+    Assumes that the data and corresponding labels are stored as .npy files,
+    the format of which is the same as datasets created via create_dataset().
+
+    Args:
+        dataset_dir (str)   Directory containing the dataset
+        test (bool)         Is true if the dataset is to be used for testing
+
+    Returns:
+        (data, label) where:
+            data is a float ndarray of shape (batch_size, 128, 128, 2)
+                containing pairs of images related by a homography
+            label is an int ndarray of shape (batch_size, 8) containing the
+                corresponding 4-point homography of the pairs of images
+    """
+
     # Make sure that dataset_dir exists and is a directory
     if not os.path.isdir(dataset_dir):
         print('Error: %s is not a directory' % dataset_dir)
@@ -187,8 +202,6 @@ def load_dataset(dataset_dir, test=False):
               'the number of label files("label_*").')
         return
 
-    # data_list = []
-    # labels_list = []
     i = 0
     num_batches = len(data_files)
     while True:
@@ -202,12 +215,3 @@ def load_dataset(dataset_dir, test=False):
 
         data = data.astype('float32') / 255
         yield (data, label)
-    #     data_list.append(data)
-    #     labels_list.append(label)
-    #
-    # data_all = np.stack(data_list)
-    # labels_all = np.stack(labels_list)
-    #
-    # print(data_all.shape)
-    # print(labels_all.shape)
-    # return (data_all, labels_all)

@@ -1,6 +1,8 @@
-# EE 298-F Machine Problem 1
-# Miranda, Neil Jon Louie P.
-# 2007-46489
+"""
+EE 298-F Machine Problem 1
+Miranda, Neil Jon Louie P.
+2007-46489
+"""
 
 import mp1_metrics as metrics
 
@@ -51,6 +53,7 @@ def create_base_model(input):
 def create_classification_model():
     input = Input(shape=(128,128,2))
     y = create_base_model(input)
+    # TODO: Implement classification model
 
 
 def create_regression_model():
@@ -64,6 +67,7 @@ def create_regression_model():
     model.compile(optimizer=adagrad, loss=metrics.euclidean_loss,
                   metrics=[metrics.mean_average_corner_error])
     return model
+
 
 def get_regression_model(model_file):
     model = load_model(model_file, custom_objects={
