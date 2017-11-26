@@ -16,3 +16,9 @@ MAX_Y = {'Car': 40, 'Cyclist': 20, 'Pedestrian': 20}
 
 MIN_Z = {'Car': -3, 'Cyclist': -3, 'Pedestrian': -3}
 MAX_Z = {'Car': 1, 'Cyclist': 1, 'Pedestrian': 1}
+
+# Parameters for the feature learning network
+VD = {'Car': 0.4, 'Cyclist': 0.4, 'Pedestrian': 0.4}
+VH = {'Car': 0.2, 'Cyclist': 0.2, 'Pedestrian': 0.2}
+VW = {'Car': 0.2, 'Cyclist': 0.2, 'Pedestrian': 0.2}
+T = {'Car': 35, 'Cyclist': 45, 'Pedestrian': 45}
