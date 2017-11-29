@@ -6,6 +6,7 @@ Miranda, Neil Jon Louie P.
 
 from keras import backend as K
 from keras.layers import Activation, BatchNormalization, Concatenate, Conv2D, Conv2DTranspose, Conv3D, Reshape, ZeroPadding2D, ZeroPadding3D
+from keras.models import Model
 
 def create_convolution_block(input, num_output, kernel_size, stride, num_layers):
     y = Conv2D(filters=num_output, kernel_size=kernel_size, strides=stride, padding='same', data_format='channels_first')(input)
@@ -18,6 +19,7 @@ def create_convolution_block(input, num_output, kernel_size, stride, num_layers)
         y = Activation(activation='relu')(y)
 
     return y
+
 
 def create_middle_network(input):
     y = ZeroPadding3D(padding=1, data_format='channels_first')(input)
@@ -36,6 +38,7 @@ def create_middle_network(input):
     y = Activation(activation='relu')(y)
 
     return y
+
 
 def create_region_proposal_network(input, task):
     shape = K.int_shape(input)
@@ -67,5 +70,16 @@ def create_region_proposal_network(input, task):
     deconv3_output = Conv2DTranspose(filters=256, kernel_size=4, strides=4, data_format='channels_first')(deconv3_input)
 
     y = Concatenate(axis=1)([deconv1_output, deconv2_output, deconv3_output])
-    
-    return y
+
+    cls_output = Conv2D(filters=2, kernel_size=1, strides=1, padding='valid', data_format='channels_first')(y)
+    reg_output = Conv2D(filters=14, kernel_size=1, strides=1, padding='valid', data_format='channels_first')(y)
+
+    return [cls_output, reg_output]
+
+
+def create_model(input, task):
+    middle_network = create_middle_network(input)
+    rpn_output = create_region_proposal_network(middle_network, task)
+    model = Model(input, rpn_output)
+
+    return model
