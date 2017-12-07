@@ -5,7 +5,9 @@ Miranda, Neil Jon Louie P.
 """
 
 from keras import backend as K
-from keras.layers import Activation, BatchNormalization, Concatenate, Conv2D, Conv2DTranspose, Conv3D, Reshape, ZeroPadding2D, ZeroPadding3D
+from keras.layers import Activation, BatchNormalization, Concatenate, Reshape
+from keras.layers import Conv2D, Conv2DTranspose, Conv3D
+from keras.layers import ZeroPadding2D, ZeroPadding3D
 from keras.models import Model
 
 def create_convolution_block(input, num_output, kernel_size, stride, num_layers):
@@ -17,6 +19,26 @@ def create_convolution_block(input, num_output, kernel_size, stride, num_layers)
         y = Conv2D(filters=num_output, kernel_size=kernel_size, strides=stride, padding='same', data_format='channels_first')(y)
         y = BatchNormalization(axis=1)(y)
         y = Activation(activation='relu')(y)
+
+    return y
+
+
+def create_feature_learning_network(input):
+    # TODO: Form input
+    y = Dense(16)(y)
+    y = BatchNormalization(axis=1)(y)
+    y = Activation(activation='relu')(y)
+    # TODO: Concatenate output to input
+    # TODO: Reset features corresponding to empty points to zero
+    y = Dense(128)(y)
+    y = BatchNormalization(axis=1)(y)
+    y = Activation(activation='relu')(y)
+    # TODO: Concatenate output to input
+    # TODO: Reset features corresponding to empty points to zero
+    y = Dense(128)(y)
+    y = BatchNormalization(axis=1)(y)
+    y = Activation(activation='relu')(y)
+    # TODO: Perform element-wise max pooling
 
     return y
 
