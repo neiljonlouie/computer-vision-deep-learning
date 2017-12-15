@@ -185,9 +185,12 @@ def get_model_memory_usage(batch_size, model):
             single_layer_mem *= s
         shapes_mem_count += single_layer_mem
 
-    trainable_count = np.sum([K.count_params(p) for p in set(model.trainable_weights)])
-    non_trainable_count = np.sum([K.count_params(p) for p in set(model.non_trainable_weights)])
+    trainable_count = np.sum([K.count_params(p) \
+                             for p in set(model.trainable_weights)])
+    non_trainable_count = np.sum([K.count_params(p) \
+                                 for p in set(model.non_trainable_weights)])
 
-    total_memory = 4.0*batch_size*(shapes_mem_count + trainable_count + non_trainable_count)
-    gbytes = np.round(total_memory / (1024.0 ** 3), 3)
-    return gbytes
+    total_memory = 4.0 * batch_size * \
+                   (shapes_mem_count + trainable_count + non_trainable_count)
+    num_gigabytes = np.round(total_memory / (1024.0 ** 3), 3)
+    return num_gigabytes

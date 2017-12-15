@@ -4,17 +4,14 @@ Miranda, Neil Jon Louie P.
 2007-46489
 """
 
-import copy
-import os.path as path
-import struct
-
+import csv, os, struct
 import numpy as np
 from scipy import io as scipy_io
 
 import mp2_util
 
 def load_bin_file(filename, task):
-    if not path.exists(filename):
+    if not os.path.exists(filename):
         print('File %s not found.' % filename)
         return None
 
@@ -92,3 +89,97 @@ def load_bin_file(filename, task):
         voxel_feature_mask[key, 0:value, 0] = 1
 
     return [voxel_buffer, voxel_feature_mask]
+
+
+# Loads the contents of the label file, returns only the bounding boxes labeled
+# with the specified task.
+def load_label_file(filename, task):
+    if not os.path.exists(filename):
+        print('File %s not found.' % filename)
+        return None
+
+    if not task in mp2_util.DET_TASKS:
+        print('Task %s not found.' % task)
+        return None
+
+    file = open(filename, 'r')
+    file_reader = csv.reader(file, delimiter=' ')
+    truths = []
+    for row in file_reader:
+        if row[0] == task:
+            box = [float(i) for i in row[8:]]
+            truths.append(box)
+
+    return np.asarray(truths)
+
+
+def compute_labels(boxes, task):
+    output_height = mp2_util.DIM_H[task] // 2
+    output_width = mp2_util.DIM_W[task] // 2
+
+    y_reg = np.zeros((output_height, output_width, 14))
+    y_cls = np.zeros((output_height, output_width, 2))
+
+    num_boxes = len(boxes)
+    num_anchors_for_box = np.zeros(num_boxes).astype(int)
+    best_anchor_for_box = -1 * np.ones((num_boxes, 7)).astype(int)
+    best_iou_for_box = np.zeros(num_boxes)
+
+
+# Loads the dataset contained in the specified directory.
+def load_dataset(data_dir, label_dir, task, batch_size):
+    # Make sure that data_dir and label_dir exist and are directories
+    if not os.path.isdir(data_dir):
+        print('Error: %s is not a directory' % data_dir)
+        return
+
+    if not os.path.isdir(label_dir):
+        print('Error: %s is not a directory' % label_dir)
+        return
+
+    # Prepare the list of files
+    data_files = os.listdir(data_dir)
+    label_files = os.listdir(label_dir)
+
+    data_files = [file for file in data_files if file.endswith('.bin')]
+    label_files = [file for file in label_files if file.endswith('.txt')]
+
+    if len(label_files) != len(data_files):
+        print('Error: The number of data files ("*.bin") must match '
+              'the number of label files ("*.txt").')
+        return
+
+    data_files = np.sort(data_files)
+    label_files = np.sort(label_files)
+
+    i = 0
+    num_files = len(data_files)
+    count = 0
+    while True:
+        buffers = []
+        features = []
+        cls_labels = []
+        reg_labels = []
+        count = 0
+        while count < batch_size:
+            [buffer, feature] = load_bin_file(
+                    os.path.join(data_dir, data_files[i]), task)
+            buffers.append(buffer)
+            features.append(feature)
+
+            label = load_label_file(
+                    os.path.join(label_dir, label_files[i]), task)
+            # TODO: Transform labels to cls, reg labels
+            cls_labels.append(label)
+            reg_labels.append(label)
+
+            i = (i + 1) % num_files
+            count += 1
+
+        buffers_stacked = np.stack(buffers)
+        features_stacked = np.stack(features)
+        cls_labels_stacked = np.stack(cls_labels)
+        reg_labels_stacked = np.stack(reg_labels)
+
+        yield ([np.copy(buffers_stacked), np.copy(features_stacked)], \
+               [np.copy(cls_labels_stacked), np.copy(reg_labels_stacked)])
