@@ -60,8 +60,8 @@ def load_bin_file(filename, task):
         if key in voxel_point_count.keys()
     }
 
-    num_voxels = mp2_util.DIM_D[task] * mp2_util.DIM_H[task] * \
-                 mp2_util.DIM_W[task]
+    num_voxels = mp2_util.DIM_X[task] * mp2_util.DIM_Y[task] * \
+                 mp2_util.DIM_Z[task]
     voxel_buffer = np.zeros((num_voxels, mp2_util.T[task], 7))
     voxel_feature_mask = np.zeros((num_voxels, mp2_util.T[task], 1))
 
@@ -114,8 +114,8 @@ def load_label_file(filename, task):
 
 
 def compute_labels(boxes, task):
-    output_height = mp2_util.DIM_H[task] // 2
-    output_width = mp2_util.DIM_W[task] // 2
+    output_height = int(mp2_util.DIM_X[task] // 2)
+    output_width = int(mp2_util.DIM_Z[task] // 2)
 
     y_reg = np.zeros((output_height, output_width, 14))
     y_cls = np.zeros((output_height, output_width, 2))
@@ -124,6 +124,39 @@ def compute_labels(boxes, task):
     num_anchors_for_box = np.zeros(num_boxes).astype(int)
     best_anchor_for_box = -1 * np.ones((num_boxes, 7)).astype(int)
     best_iou_for_box = np.zeros(num_boxes)
+
+    anchor_sizes = mp2_util.ANCHOR_SIZES[task]
+    anchor_rotations = mp2_util.ANCHOR_ROTATIONS[task]
+    anchor_y = mp2_util.ANCHOR_Y[task]
+
+    height_spacing = float(mp2_util.MAX_X[task] - mp2_util.MIN_X[task]) / \
+                           output_height
+    width_spacing = float(mp2_util.MAX_Z[task] - mp2_util.MIN_Z[task]) / \
+                          output_width
+    x_coords = np.linspace(mp2_util.MIN_X[task] + 0.5 * height_spacing, \
+                           mp2_util.MAX_X[task] - 0.5 * height_spacing, \
+                           num=output_height)
+    z_coords = np.linspace(mp2_util.MIN_Z[task] + 0.5 * width_spacing, \
+                           mp2_util.MAX_Z[task] - 0.5 * width_spacing, \
+                           num=output_width)
+
+    print(boxes)
+    for anchor_size in anchor_sizes:
+        for anchor_rot in anchor_rotations:
+            for ix in x_coords:
+                for jz in z_coords:
+                    anchor = [anchor_size[0], anchor_size[1], anchor_size[2], \
+                              ix, anchor_y, jz, anchor_rot]
+                    anchor_type = 'neg'
+                    best_iou_for_loc = 0.0
+
+                    for box_id in range(num_boxes):
+                        curr_iou = mp2_util.compute_iou(boxes[box_id], anchor)
+                        if curr_iou > 0:
+                            print('%.3f' % curr_iou)
+
+
+    return ([1, 2], [3, 4])
 
 
 # Loads the dataset contained in the specified directory.
@@ -169,9 +202,9 @@ def load_dataset(data_dir, label_dir, task, batch_size):
 
             label = load_label_file(
                     os.path.join(label_dir, label_files[i]), task)
-            # TODO: Transform labels to cls, reg labels
-            cls_labels.append(label)
-            reg_labels.append(label)
+            cls_label, reg_label = compute_labels(label, task)
+            cls_labels.append(cls_label)
+            reg_labels.append(reg_label)
 
             i = (i + 1) % num_files
             count += 1

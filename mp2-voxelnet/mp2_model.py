@@ -85,8 +85,8 @@ def create_feature_learning_network(input, task):
     y = Lambda(K.max, arguments={'axis': 2, 'keepdims': True})(y)
 
     shape = K.int_shape(y)
-    y = Reshape(target_shape=(mp2_util.DIM_D[task], mp2_util.DIM_H[task], \
-                              mp2_util.DIM_W[task], shape[-1]))(y)
+    y = Reshape(target_shape=(mp2_util.DIM_Y[task], mp2_util.DIM_X[task], \
+                              mp2_util.DIM_Z[task], shape[-1]))(y)
     y = Permute((4, 1, 2, 3))(y)
 
     return y
