@@ -4,4 +4,14 @@
 
 import dataset
 
-dataset.preprocess_dataset('dataset', 'label_data_0313.json')
+import cv2
+
+generator = dataset.preprocess_dataset('dataset', 'labels.json')
+
+cv2.namedWindow('image')
+# cv2.namedWindow('label')
+for i in range(5):
+    (image, label) = next(generator)
+    cv2.imshow('image', image)
+    # cv2.imshow('label', label)
+    cv2.waitKey(1000)
