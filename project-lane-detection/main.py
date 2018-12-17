@@ -2,16 +2,11 @@
 # Miranda, Neil Jon Louie P.
 # 2007-46489
 
-import dataset
+from dataset_generator import DatasetGenerator as Generator
 
 import cv2
 
-generator = dataset.preprocess_dataset('dataset', 'labels.json')
+dataset_root_dir = '/home/neil/Documents/culanedataset'
+trn_generator = Generator(dataset_root_dir, 'list/train_gt.txt')
+val_generator = Generator(dataset_root_dir, 'list/val_gt.txt')
 
-cv2.namedWindow('image')
-# cv2.namedWindow('label')
-for i in range(5):
-    (image, label) = next(generator)
-    cv2.imshow('image', image)
-    # cv2.imshow('label', label)
-    cv2.waitKey(1000)
