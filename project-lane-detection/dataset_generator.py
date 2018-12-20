@@ -26,15 +26,32 @@ class DatasetGenerator(keras.utils.Sequence):
         data = list(list_file)
         for line in data:
             strings = line.split()
-            self.image_filenames.append(os.path.join(dataset_root_dir, strings[0]))
-            self.label_filenames.append(os.path.join(dataset_root_dir, strings[1]))
+            self.image_filenames.append(os.path.normpath(dataset_root_dir + strings[0]))
+            self.label_filenames.append(os.path.normpath(dataset_root_dir + strings[1]))
         
     def __len__(self):
-        return np.ceil(len(self.label_filenames) / float(self.batch_size))
+        return np.int(np.ceil(len(self.label_filenames) / float(self.batch_size)))
         
     def __getitem__(self, idx):
         batch_x = self.image_filenames[idx * self.batch_size : (idx + 1) * self.batch_size]
         batch_y = self.label_filenames[idx * self.batch_size : (idx + 1) * self.batch_size]
 
-        return np.array([cv2.imread(image_path) for image_path in batch_x]), \
-               np.array([cv2.imread(label_path) for label_path in batch_y])
+        x = []
+        y = []
+
+        for i in range(len(batch_x)):
+            image = cv2.imread(batch_x[i])
+            label = cv2.imread(batch_y[i], cv2.IMREAD_GRAYSCALE)
+
+            image = cv2.resize(image, dsize=(1632,608))
+            label = cv2.resize(label, dsize=(1632,608))
+
+            label_flat = np.array(label, dtype=int).flatten()
+            label_onehot = np.zeros((len(label_flat), 5))
+            label_onehot[np.arange(len(label_flat)), label_flat] = 1
+            label_onehot = np.reshape(label_onehot, (label.shape[0], label.shape[1], 5))
+
+            x.append(image)
+            y.append(label_onehot)
+
+        return np.array(x), np.array(y, dtype=int)
